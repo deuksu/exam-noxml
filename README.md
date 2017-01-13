@@ -10,7 +10,7 @@ DB는 EmbeddedDatabaseBuilder을 통한 H2을 사용했으며 Jpa을 기본으�
 그냥 호기심에 한번 테스트한 소스 임.....
 
 ```
-1. web.xml -> webApplicationInitializer
-2. applicationContext.xml -> appConfig
-3. servletContext.xml -> webConfig
+1. web.xml								 	-> webApplicationInitializer
+2. applicationContext.xml 	-> appConfig
+3. servletContext.xml 			-> webConfig
 ```
