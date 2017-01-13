@@ -1,0 +1,146 @@
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'	//apply plugin: "eclipse" 자동 포함
+apply plugin: 'idea'
+apply plugin: 'war'
+
+group = 'com.exam.noxml'
+version = '0.1-SNAPSHOT'
+description = "exam-noxml"
+
+//프로젝트 전체와 서브 프로젝트에서도 접근 가능한 변수선언
+ext {
+	appName = 'exam-noxml'
+	compatibilityVersion = 1.8
+	springframeworkVersion = "4.2.5.RELEASE"
+  springframeworkBatchVersion = "3.0.6.RELEASE"
+  springframeworkSecurityVersion = "4.0.4.RELEASE"	
+	servletVersion = 3.1
+}
+
+//compile encoding
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+//source,target version
+sourceCompatibility = compatibilityVersion
+targetCompatibility = compatibilityVersion
+
+//repository::mavenCentral()
+repositories {
+  maven { url "http://repo1.maven.org/maven2/" }
+  maven { url "http://oss.sonatype.org/content/groups/public" }
+  maven { url "http://repo.springsource.org/release" }
+}
+
+//logging는 제외
+configurations.all {
+  all.collect { configuration ->
+    configuration.exclude group: 'commons-logging', module: 'commons-logging'
+    configuration.exclude group: 'log4j', module: 'log4j'
+    configuration.exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    configuration.exclude group: 'org.slf4j', module: 'slf4j-jcl'
+    configuration.exclude group: 'org.slf4j', module: 'slf4j-jdk14'
+  }
+}
+
+allprojects {
+  
+	sourceSets {
+	  main {
+	    resources {
+	      srcDir "src/main/resources"
+	    }
+	  }
+	}
+
+  eclipse {
+  
+    // 빌드하고나면 프로젝트정보도 같이 지워지는데, Gradle프로젝트임을 인식시켜줍니다.
+    project.natures "org.springsource.ide.eclipse.gradle.core.nature"
+    wtp {
+        component {
+            contextPath = '/'
+        }    
+        facet {
+            facet name: 'jst.web', 	version: servletVersion
+            facet name: 'jst.java', version: compatibilityVersion
+        }
+    }
+  
+		classpath {
+	    downloadJavadoc = false
+	    downloadSources = true
+	    
+	    defaultOutputDir = file("${buildDir}/classes/main")
+	
+	    file {
+	      whenMerged { cp ->
+					def testSrcs = cp.entries.findAll {
+					  it instanceof org.gradle.plugins.ide.eclipse.model.SourceFolder &&
+					  it.path.startsWith("src/test/")
+					}
+	
+	        testSrcs.each {
+	          // 멀티 프로젝트에서는 꼭 project.relativePath 로 호출해야 한다.
+	          // 안그러면 Root 프로젝트에 대한 상대경로가 지정됨면서 하위 모듈의 프로젝트이름이 이중으로 들어감.
+	          it.output = project.relativePath("${buildDir}/classes/test")
+	          it.exported = false // Deployment Assembly에서 제외
+	        }
+	
+	        // 중복 엔트리 삭제. gradle eclipse를 두 번이상 실행하면 test 관련 디렉토리가 중복 생성된다.
+	        cp.entries.unique()
+	      }
+			}
+		}
+	}
+}
+
+dependencies {
+ //spring
+  compile group: 'org.springframework', name: 'spring-context', version: springframeworkVersion
+  compile group: 'org.springframework', name: 'spring-webmvc', version: springframeworkVersion
+  compile group: 'org.springframework', name: 'spring-core', version: springframeworkVersion
+  compile group: 'org.springframework', name: 'spring-orm', version: springframeworkVersion
+  compile group: 'org.springframework', name: 'spring-jdbc', version: springframeworkVersion
+  compile group: 'org.springframework', name: 'spring-test', version: springframeworkVersion
+
+  //h2	
+  compile group: 'com.h2database', name: 'h2', version: '1.4.193'
+    		
+  //jpa
+  compile group: 'org.springframework.data', name: 'spring-data-jpa', version: '1.10.6.RELEASE'
+  compile group: 'org.hibernate', name: 'hibernate-entitymanager', version: '5.1.3.Final'
+  compile group: 'org.hibernate', name: 'hibernate-validator', version: '5.1.3.Final'
+  compile group: 'javax.validation', name: 'validation-api', version: '1.1.0.Final'
+  
+  //logger
+  compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+  compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.21'
+  compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
+  
+  //apache common
+  compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+  compile group: 'commons-codec', name: 'commons-codec', version: '1.10'
+  
+  //@inject
+  compile group: 'javax.inject', name: 'javax.inject', version: '1'
+  
+	//jstl
+	compile group: 'javax', name: 'javaee-api', version: '7.0'
+  compile group: 'javax.servlet', name: 'jstl', version: '1.2'
+	
+	//html parser  
+  compile group: 'org.jsoup', name: 'jsoup', version: '1.10.1'
+
+	//json
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.7.4'
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.7.4'
+  compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.7.4'
+  
+	//test unit
+  testCompile group: 'junit', name: 'junit', version: '4.12'
+  testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '3.3' // 원하는 Gradle 버전 명시
+}
